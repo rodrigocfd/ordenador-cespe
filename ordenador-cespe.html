@@ -15,8 +15,8 @@
 <script type="text/javascript">
 function Tabber(str, total) {
 	// Retorna o texto com espaços à direita, até o total.
-	var ret = str + ' ';
-	for(var i = (str + ' ').length; i < total; ++i) ret += ' ';
+	var ret = typeof str == 'string' ? str : str.toString();
+	for(var i = str.length; i < total; ++i) ret += ' ';
 	return ret;
 }
 
@@ -41,6 +41,8 @@ $(document).ready(function() {
 			.replace(/\//g, '\n')       // transforma as barras em quebras de linha; uma entrada por linha
 			.split('\n');               // agora temos um array com as entradas
 
+		var longestNameLen = 0; // quantidade de caracteres do candidato com nome mais comprido
+
 		for(var i = 0; i < data.length; ++i) { // para cada entrada
 			data[i] = data[i].split(','); // um array com os campos
 			for(var j = 0; j < data[i].length; ++j) {
@@ -48,6 +50,8 @@ $(document).ready(function() {
 				if(!isNaN(data[i][j]))
 					data[i][j] = parseFloat(data[i][j]);
 			}
+			if(data[i][1].length > longestNameLen)
+				longestNameLen = data[i][1].length;
 		}
 
 		if(campoOrd > data[0].length) {
@@ -63,7 +67,7 @@ $(document).ready(function() {
 		var output = '';
 		for(var i = 0; i < data.length; ++i) {
 			output += Pad(i + 1, 3) + ' ' // ordem numérica
-				+ Tabber(data[i][1], 50); // nome do candidato
+				+ Tabber(data[i][1], longestNameLen + 1); // nome do candidato
 			for(var j = 2; j < data[i].length; ++j)
 				output += Tabber(data[i][j], 7); // demais valores
 			output += '\n';
