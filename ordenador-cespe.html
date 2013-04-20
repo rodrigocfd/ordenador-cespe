@@ -39,6 +39,7 @@ $(document).ready(function() {
 		var data = $('#input').val(); // texto bruto com entradas separadas por barra
 		data = data.replace(/\n/g, ' ') // retira quebras de linha
 			.replace(/\//g, '\n')       // transforma as barras em quebras de linha; uma entrada por linha
+			.replace(/\;/g, '\n')       // transforma as ponto e virgula em quebras de linha; uma entrada por linha
 			.split('\n');               // agora temos um array com as entradas
 
 		var longestNameLen = 0; // quantidade de caracteres do candidato com nome mais comprido
