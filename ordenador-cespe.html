@@ -16,7 +16,7 @@
 function Tabber(str, total) {
 	// Retorna o texto com espaços à direita, até o total.
 	var ret = typeof str == 'string' ? str : str.toString();
-	for(var i = str.length; i < total; ++i) ret += ' ';
+	for(var i = ret.length; i < total; ++i) ret += ' ';
 	return ret;
 }
 
