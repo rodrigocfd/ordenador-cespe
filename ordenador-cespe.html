@@ -26,7 +26,7 @@ function Pad(num, total) {
 	return Array(+(zero > 0 && zero)).join('0') + num;
 }
 
-function PegarCamposOrdenadores() {
+function PegaCamposOrdenadores() {
 	var ret = [ $('#ordenador').val(), $('#ordenador2').val() ];
 
 	if(ret[0].length == 0 || isNaN(ret[0])) { // validação do primeiro campo de ordenação
@@ -54,6 +54,35 @@ function PegarCamposOrdenadores() {
 	return ret;
 }
 
+function CriaCampoSomatorio(data) {
+	var somadores = $('#somadores').val();
+	if(somadores.length == 0) return true;
+	somadores = somadores.split(',');
+
+	for(var i = 0; i < somadores.length; ++i) { // validação dos campos para o somatório
+		if(isNaN(somadores[i])) {
+			alert('Digite os números dos campos a serem somados para formar um novo campo, ' +
+				'ou deixe em branco caso um somatório não seja necessário.');
+			return false;
+		}
+		somadores[i] = parseInt(somadores[i]);
+
+		if(somadores[i] > data[0].length) {
+			alert('O último campo de ordenação é ' + data[0].length + ', ' +
+				'não existe um campo ' + somadores[i] + ' para somar.');
+			$('#somadores').select();
+			return false;
+		}
+	}
+
+	for(var i = 0; i < data.length; ++i) {
+		data[i].push(0); // cria o campo extra
+		for(var j = 0; j < somadores.length; ++j)
+			data[i][data[i].length - 1] += data[i][somadores[j] - 1]; // soma cada campo
+	}
+	return true;
+}
+
 function FormataSaida(data) {
 	var longestNameLen = 0; // quantidade de caracteres do candidato com nome mais comprido
 	for(var i = 0; i < data.length; ++i) { // para cada entrada
@@ -66,7 +95,7 @@ function FormataSaida(data) {
 		output += Pad(i + 1, data.length.toString().length) + ' ' // ordem numérica
 			+ Tabber(data[i][1], longestNameLen + 1); // nome do candidato
 		for(var j = 2; j < data[i].length; ++j)
-			output += Tabber(data[i][j], 7); // demais valores
+			output += Tabber(data[i][j].toFixed(2), 7); // demais valores
 		output += '\n';
 	}
 	$('#output').val(output);
@@ -74,7 +103,7 @@ function FormataSaida(data) {
 
 $(document).ready(function() {
 	$('#processar').click(function() {
-		var campoOrd = PegarCamposOrdenadores();
+		var campoOrd = PegaCamposOrdenadores();
 		if(campoOrd === null) return;
 
 		var data = $('#input').val(); // texto bruto com entradas separadas por barra
@@ -91,6 +120,7 @@ $(document).ready(function() {
 					data[i][j] = parseFloat(data[i][j]);
 			}
 		}
+		if(!CriaCampoSomatorio(data)) return;
 
 		if(campoOrd[0] > data[0].length || campoOrd[1] > data[0].length) { // valida campos de ordenação
 			alert('O último campo de ordenação é ' + data[0].length + ', não ' +
@@ -118,6 +148,7 @@ $(document).ready(function() {
 	<p>Exemplo de entrada:<br/>
 		10009632, Fulano de Tal, 53.50, 13.33 / 10009533, José das Medalhas, 50.28, 13.2 / 10009532, Maria da Silva, 48.5, 12.23 / 10009420, Quentin Tarantino, 33.12, 13.9 / 10009620, Walter Cunha, 32.00, 11.11 / 10009430, Bob Maconel, 60.00, 13.27 / 10009618, Fernando Pedrosa, 60.90, 12.6 / 10009633, Kim Jong-un, 99.97, 15 / 10009534, Vladimir Putin, 61.18, 11.8 / 10009705, William Jefferson Clinton, 61.18, 11.99</p>
 	<textarea id="input" rows="18" cols="120"></textarea><br/>
+	Criar campo extra somando os campos <input type="text" id="somadores" size="10" value="3,4"/> (separe-os por vírgula)<br/>
 	Ordenar pelo campo <input type="text" id="ordenador" size="2" value="3"/>
 		e depois pelo campo <input type="text" id="ordenador2" size="2"/>
 		<input id="processar" type="button" value="Processar"/><br/>
