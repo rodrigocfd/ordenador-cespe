@@ -26,35 +26,62 @@ function Pad(num, total) {
 	return Array(+(zero > 0 && zero)).join('0') + num;
 }
 
+function PegarCamposOrdenadores() {
+	var ret = [ $('#ordenador').val(), $('#ordenador2').val() ];
+
+	if(ret[0].length == 0 || isNaN(ret[0])) { // validação do primeiro campo de ordenação
+		alert('O campo de ordenação deve ser um valor numérico.');
+		$('#ordenador').select();
+		return null;
+	}
+	ret[0] = parseInt(ret[0]);
+
+	if(ret[1].length > 0) { // validação do segundo campo de ordenação
+		if(isNaN(ret[1])) {
+			alert('O segundo campo de ordenação deve ser um valor numérico,\n' +
+				'ou deixe em branco se ele não for necessário.');
+			$('#ordenador2').select();
+			return null;
+		}
+		ret[1] = parseInt(ret[1]);
+	}
+
+	if(ret[0] == ret[1]) {
+		alert('Os campos de ordenação são iguais.\nIsso não faz muito sentido, não é?');
+		$('#ordenador2').select();
+		return null;
+	}
+	return ret;
+}
+
+function FormataSaida(data) {
+	var longestNameLen = 0; // quantidade de caracteres do candidato com nome mais comprido
+	for(var i = 0; i < data.length; ++i) { // para cada entrada
+		if(data[i][1].length > longestNameLen)
+			longestNameLen = data[i][1].length;
+	}
+
+	var output = '';
+	for(var i = 0; i < data.length; ++i) {
+		output += Pad(i + 1, data.length.toString().length) + ' ' // ordem numérica
+			+ Tabber(data[i][1], longestNameLen + 1); // nome do candidato
+		for(var j = 2; j < data[i].length; ++j)
+			output += Tabber(data[i][j], 7); // demais valores
+		output += '\n';
+	}
+	$('#output').val(output);
+}
+
 $(document).ready(function() {
 	$('#processar').click(function() {
-		var campoOrd = $('#ordenador').val(),
-			campoOrd2 = $('#ordenador2').val();
-
-		if(campoOrd.length == 0 || isNaN(campoOrd)) { // validação do primeiro campo de ordenação
-			alert('O campo de ordenação deve ser um valor numérico.');
-			$('#ordenador').select();
-			return;
-		}
-		campoOrd = parseInt(campoOrd);
-
-		if(campoOrd2.length > 0) { // validação do segundo campo de ordenação
-			if(isNaN(campoOrd2)) {
-				alert('O segundo campo de ordenação deve ser um valor numérico,\n' +
-					'ou deixe em branco se ele não for necessário.');
-				$('#ordenador2').select();
-				return;
-			}
-			campoOrd2 = parseInt(campoOrd2);
-		}
+		var campoOrd = PegarCamposOrdenadores();
+		if(campoOrd === null) return;
 
 		var data = $('#input').val(); // texto bruto com entradas separadas por barra
 		data = data.replace(/\n/g, ' ') // retira quebras de linha
 			.replace(/\//g, '\n')       // transforma as barras em quebras de linha; uma entrada por linha
 			.replace(/\;/g, '\n')       // transforma as ponto e virgula em quebras de linha; uma entrada por linha
 			.split('\n');               // agora temos um array com as entradas
-
-		var longestNameLen = 0; // quantidade de caracteres do candidato com nome mais comprido
 
 		for(var i = 0; i < data.length; ++i) { // para cada entrada
 			data[i] = data[i].split(','); // um array com os campos
@@ -63,40 +90,25 @@ $(document).ready(function() {
 				if(!isNaN(data[i][j]))
 					data[i][j] = parseFloat(data[i][j]);
 			}
-			if(data[i][1].length > longestNameLen)
-				longestNameLen = data[i][1].length;
 		}
 
-		if(campoOrd > data[0].length || campoOrd2 > data[0].length) { // valida campos de ordenação
+		if(campoOrd[0] > data[0].length || campoOrd[1] > data[0].length) { // valida campos de ordenação
 			alert('O último campo de ordenação é ' + data[0].length + ', não ' +
-				(campoOrd > data[0].length ? campoOrd : campoOrd2) + '.');
-			$(campoOrd > data[0].length ? '#ordenador' : '#ordenador2').select();
-			return;
-		} else if(campoOrd == campoOrd2) {
-			alert('Os campos de ordenação são iguais.\nIsso não faz muito sentido, não é?');
-			$('#ordenador2').select();
+				(campoOrd[0] > data[0].length ? campoOrd[0] : campoOrd[1]) + '.');
+			$(campoOrd[0] > data[0].length ? '#ordenador' : '#ordenador2').select();
 			return;
 		}
 
 		data.sort(function(a, b) {
-			if(campoOrd2.length != '') {
-				return b[campoOrd - 1] != a[campoOrd - 1] ?
-					b[campoOrd - 1] - a[campoOrd - 1] :
-					b[campoOrd2 - 1] - a[campoOrd2 - 1];
+			if(campoOrd[1].length != '') {
+				return b[campoOrd[0] - 1] != a[campoOrd[0] - 1] ?
+					b[campoOrd[0] - 1] - a[campoOrd[0] - 1] :
+					b[campoOrd[1] - 1] - a[campoOrd[1] - 1];
 			} else {
-				return b[campoOrd - 1] - a[campoOrd - 1]; // decrescente
+				return b[campoOrd[0] - 1] - a[campoOrd[0] - 1]; // decrescente
 			}
 		});
-
-		var output = '';
-		for(var i = 0; i < data.length; ++i) {
-			output += Pad(i + 1, data.length.toString().length) + ' ' // ordem numérica
-				+ Tabber(data[i][1], longestNameLen + 1); // nome do candidato
-			for(var j = 2; j < data[i].length; ++j)
-				output += Tabber(data[i][j], 7); // demais valores
-			output += '\n';
-		}
-		$('#output').val(output);
+		FormataSaida(data);
 	});
 });
 </script>
