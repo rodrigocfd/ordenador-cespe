@@ -28,13 +28,25 @@ function Pad(num, total) {
 
 $(document).ready(function() {
 	$('#processar').click(function() {
-		var campoOrd = $('#ordenador').val();
-		if(isNaN(campoOrd)) {
+		var campoOrd = $('#ordenador').val(),
+			campoOrd2 = $('#ordenador2').val();
+
+		if(campoOrd.length == 0 || isNaN(campoOrd)) { // validação do primeiro campo de ordenação
 			alert('O campo de ordenação deve ser um valor numérico.');
-			$('#ordenador').focus();
+			$('#ordenador').select();
 			return;
 		}
 		campoOrd = parseInt(campoOrd);
+
+		if(campoOrd2.length > 0) { // validação do segundo campo de ordenação
+			if(isNaN(campoOrd2)) {
+				alert('O segundo campo de ordenação deve ser um valor numérico,\n' +
+					'ou deixe em branco se ele não for necessário.');
+				$('#ordenador2').select();
+				return;
+			}
+			campoOrd2 = parseInt(campoOrd2);
+		}
 
 		var data = $('#input').val(); // texto bruto com entradas separadas por barra
 		data = data.replace(/\n/g, ' ') // retira quebras de linha
@@ -55,14 +67,25 @@ $(document).ready(function() {
 				longestNameLen = data[i][1].length;
 		}
 
-		if(campoOrd > data[0].length) {
-			alert('O último campo de ordenação é ' + data[0].length + ', não ' + campoOrd + '.');
-			$('#ordenador').focus();
+		if(campoOrd > data[0].length || campoOrd2 > data[0].length) { // valida campos de ordenação
+			alert('O último campo de ordenação é ' + data[0].length + ', não ' +
+				(campoOrd > data[0].length ? campoOrd : campoOrd2) + '.');
+			$(campoOrd > data[0].length ? '#ordenador' : '#ordenador2').select();
+			return;
+		} else if(campoOrd == campoOrd2) {
+			alert('Os campos de ordenação são iguais.\nIsso não faz muito sentido, não é?');
+			$('#ordenador2').select();
 			return;
 		}
 
 		data.sort(function(a, b) {
-			return b[campoOrd - 1] - a[campoOrd - 1]; // decrescente
+			if(campoOrd2.length != '') {
+				return b[campoOrd - 1] != a[campoOrd - 1] ?
+					b[campoOrd - 1] - a[campoOrd - 1] :
+					b[campoOrd2 - 1] - a[campoOrd2 - 1];
+			} else {
+				return b[campoOrd - 1] - a[campoOrd - 1]; // decrescente
+			}
 		});
 
 		var output = '';
@@ -81,11 +104,13 @@ $(document).ready(function() {
 <body>
 	<p>Ordenação de resultado do Cespe</p>
 	<p>Exemplo de entrada:<br/>
-		10009632, Fulano de Tal, 53.50 / 10009533, José das Medalhas, 50.28 / 10009532, Maria da Silva, 48.5 / 10009420, Quentin Tarantino, 33.12 / 10009620, Walter Cunha, 32.00 / 10009430, Bob Maconel, 60.00 / 10009618, Fernando Pedrosa, 60.90 / 10009633, Kim Jong-un, 99.97 / 10009534, Vladimir Putin, 61.20 / 10009705, William Jefferson Clinton, 61.18</p>
+		10009632, Fulano de Tal, 53.50, 13.33 / 10009533, José das Medalhas, 50.28, 13.2 / 10009532, Maria da Silva, 48.5, 12.23 / 10009420, Quentin Tarantino, 33.12, 13.9 / 10009620, Walter Cunha, 32.00, 11.11 / 10009430, Bob Maconel, 60.00, 13.27 / 10009618, Fernando Pedrosa, 60.90, 12.6 / 10009633, Kim Jong-un, 99.97, 15 / 10009534, Vladimir Putin, 61.18, 11.8 / 10009705, William Jefferson Clinton, 61.18, 11.99</p>
 	<textarea id="input" rows="18" cols="120"></textarea><br/>
 	Ordenar pelo campo <input type="text" id="ordenador" size="2" value="3"/>
+		e depois pelo campo <input type="text" id="ordenador2" size="2"/>
 		<input id="processar" type="button" value="Processar"/><br/>
 	<textarea id="output" rows="18" cols="120">(saída...)</textarea>
-	<p><i><a target="_blank" href="https://github.com/rodrigocfd/ordenador-cespe">github.com/rodrigocfd/ordenador-cespe</a></i></p>
+	<p><i>O código fonte deste script é livre:
+		<a target="_blank" href="https://github.com/rodrigocfd/ordenador-cespe">github.com/rodrigocfd/ordenador-cespe</a></i></p>
 </body>
 </html>
