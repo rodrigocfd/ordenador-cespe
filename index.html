@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<!--
+	Repositório: https://github.com/rodrigocfd/ordenador-cespe
+	Publicado sob a licença MIT.
+	Veja license.txt para detalhes.
+-->
+<head>
+<meta charset="UTF-8"/>
+<title>Ordenação de resultado do Cespe</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+function Tabber(str, total) {
+	// Retorna o texto com espaços à direita, até o total.
+	var ret = typeof str == 'string' ? str : str.toString();
+	for(var i = ret.length; i < total; ++i) ret += ' ';
+	return ret;
+}
+
+function Pad(num, total) {
+	// Retorna o número com zeros à esquerda, até o total.
+	var zero = total - num.toString().length + 1;
+	return Array(+(zero > 0 && zero)).join('0') + num;
+}
+
+function PegaCamposOrdenadores() {
+	var ret = [ $('#ordenador').val(), $('#ordenador2').val() ];
+
+	if(ret[0].length == 0 || isNaN(ret[0])) { // validação do primeiro campo de ordenação
+		alert('O campo de ordenação deve ser um valor numérico.');
+		$('#ordenador').select();
+		return null;
+	}
+	ret[0] = parseInt(ret[0]);
+
+	if(ret[1].length > 0) { // validação do segundo campo de ordenação
+		if(isNaN(ret[1])) {
+			alert('O segundo campo de ordenação deve ser um valor numérico,\n' +
+				'ou deixe em branco se ele não for necessário.');
+			$('#ordenador2').select();
+			return null;
+		}
+		ret[1] = parseInt(ret[1]);
+	}
+
+	if(ret[0] == ret[1]) {
+		alert('Os campos de ordenação são iguais.\nIsso não faz muito sentido, não é?');
+		$('#ordenador2').select();
+		return null;
+	}
+	return ret;
+}
+
+function CriaCampoSomatorio(data) {
+	var somadores = $('#somadores').val();
+	if(somadores.length == 0) return true;
+	somadores = somadores.split(',');
+
+	for(var i = 0; i < somadores.length; ++i) { // validação dos campos para o somatório
+		if(isNaN(somadores[i])) {
+			alert('Digite os números dos campos a serem somados para formar um novo campo, ' +
+				'ou deixe em branco caso um somatório não seja necessário.');
+			return false;
+		}
+		somadores[i] = parseInt(somadores[i]);
+
+		if(somadores[i] > data[0].length) {
+			alert('O último campo de ordenação é ' + data[0].length + ', ' +
+				'não existe um campo ' + somadores[i] + ' para somar.');
+			$('#somadores').select();
+			return false;
+		}
+	}
+
+	for(var i = 0; i < data.length; ++i) {
+		data[i].push(0); // cria o campo extra
+		for(var j = 0; j < somadores.length; ++j)
+			data[i][data[i].length - 1] += data[i][somadores[j] - 1]; // soma cada campo
+	}
+	return true;
+}
+
+function FormataSaida(data) {
+	var output = '';
+	if($('#csv').val() == 'txt') {
+		var longestNameLen = 0; // quantidade de caracteres do candidato com nome mais comprido
+		for(var i = 0; i < data.length; ++i) { // para cada entrada
+			if(data[i][1].length > longestNameLen)
+				longestNameLen = data[i][1].length;
+		}
+
+		for(var i = 0; i < data.length; ++i) {
+			output += Pad(i + 1, data.length.toString().length) + ' ' // ordem numérica
+				+ Tabber(data[i][1], longestNameLen + 1); // nome do candidato
+			for(var j = 2; j < data[i].length; ++j)
+				output += Tabber(data[i][j].toFixed(2), 7); // demais valores
+			output += '\n';
+		}
+	} else {
+		for(var i = 0; i < data.length; ++i) {
+			output += (i + 1) + ',' // ordem numérica
+				+ data[i][1] + ',' // nome do candidato
+			for(var j = 2; j < data[i].length; ++j)
+				output += data[i][j].toFixed(2) + ','; // demais valores
+			output = output.substr(0, output.length - 1) + '\n';
+		}
+	}
+	$('#output').val(output);
+}
+
+$(document).ready(function() {
+	$('#vai').submit(function() {
+		var campoOrd = PegaCamposOrdenadores();
+		if(campoOrd === null) return false;
+
+		var data = $('#input').val(); // texto bruto com entradas separadas por barra
+		data = data.replace(/\n/g, ' ') // retira quebras de linha
+			.replace(/\//g, '\n')       // transforma as barras em quebras de linha; uma entrada por linha
+			.replace(/\;/g, '\n')       // transforma as ponto e virgula em quebras de linha; uma entrada por linha
+			.split('\n');               // agora temos um array com as entradas
+
+		for(var i = 0; i < data.length; ++i) { // para cada entrada
+			data[i] = data[i].split(','); // um array com os campos
+			for(var j = 0; j < data[i].length; ++j) {
+				data[i][j] = data[i][j].trim(); // trim em cada campo
+				if(!isNaN(data[i][j]))
+					data[i][j] = parseFloat(data[i][j]);
+			}
+		}
+		if(!CriaCampoSomatorio(data)) return false;
+
+		if(campoOrd[0] > data[0].length || campoOrd[1] > data[0].length) { // valida campos de ordenação
+			alert('O último campo de ordenação é ' + data[0].length + ', não ' +
+				(campoOrd[0] > data[0].length ? campoOrd[0] : campoOrd[1]) + '.');
+			$(campoOrd[0] > data[0].length ? '#ordenador' : '#ordenador2').select();
+			return false;
+		}
+
+		data.sort(function(a, b) {
+			if(campoOrd[1].length != '') {
+				return b[campoOrd[0] - 1] != a[campoOrd[0] - 1] ?
+					b[campoOrd[0] - 1] - a[campoOrd[0] - 1] :
+					b[campoOrd[1] - 1] - a[campoOrd[1] - 1];
+			} else {
+				return b[campoOrd[0] - 1] - a[campoOrd[0] - 1]; // decrescente
+			}
+		});
+		FormataSaida(data);
+		return false;
+	});
+});
+</script>
+</head>
+<body>
+	<p>Ordenação de resultado do Cespe</p>
+	Exemplo de entrada:<br/>
+		10009632, Fulano de Tal, 53.50, 13.33 / 10009533, José das Medalhas, 50.28, 13.2 / 10009532, Maria da Silva, 48.5, 12.23 / 10009420, Quentin Tarantino, 33.12, 13.9 / 10009620, Walter Cunha, 32.00, 11.11 / 10009430, Bob Maconel, 60.00, 13.27 / 10009618, Fernando Pedrosa, 60.90, 12.6 / 10009633, Kim Jong-un, 99.97, 15 / 10009534, Vladimir Putin, 61.18, 11.8 / 10009705, William Jefferson Clinton, 61.18, 11.99</p>
+	<textarea id="input" rows="14" cols="130"></textarea><br/>
+	<form id="vai"><p>
+		Criar campo extra somando os campos <input type="text" id="somadores" size="10" value="3,4"/> (separe-os por vírgula)<br/>
+		Ordenar pelo campo <input type="text" id="ordenador" size="2" value="3"/>
+			e depois pelo campo <input type="text" id="ordenador2" size="2"/>, gerar
+		<select id="csv">
+			<option value="txt">texto plano</option>
+			<option value="csv">CSV</option>
+		</select>
+		<input type="submit" value="Processar"/>
+	</p></form>
+	<textarea id="output" rows="14" cols="80">(saída...)</textarea>
+	<p><i>O código fonte deste script é livre:
+		<a target="_blank" href="https://github.com/rodrigocfd/ordenador-cespe">github.com/rodrigocfd/ordenador-cespe</a></i></p>
+</body>
+</html>
